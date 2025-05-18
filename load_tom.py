@@ -123,21 +123,31 @@ def load_oracle_features_from_TOM(
     ids = ids[:num_objects] if len(ids) > num_objects else ids
     
     # using these object ids, load in static and time series data for ORACLE
-    static = tom.post('db/runsqlquery',
-                      json={'query': '''SELECT diaobject_id, ra, decl, mwebv, mwebv_err, z_final, z_final_err, hostgal_zphot, hostgal_zphot_err,
+    static = tom.post('db/runsqlquery/',
+                  json={'query': '''SELECT diaobject_id, ra, decl, mwebv, mwebv_err, z_final, z_final_err, hostgal_zphot, hostgal_zphot_err,
                   hostgal_zspec, hostgal_zspec_err, hostgal_ra, hostgal_dec, hostgal_snsep, hostgal_ellipticity, hostgal_mag_u,
                   hostgal_mag_g, hostgal_mag_r, hostgal_mag_i, hostgal_mag_z, hostgal_mag_y FROM elasticc2_ppdbdiaobject WHERE diaobject_id IN (%s) ORDER BY diaobject_id;''' % (', '.join(str(id) for id in ids)),
                        'subdict': {}})
-    static_data = static.json() if static.status_code == 200 else static.status_code
+    static_data = static.json() if static.status_code == 200 else static
     print('=> Loaded static data...')
     
     ts = tom.post('db/runsqlquery/',
-                 json={'query': 'SELECT filtername, psflux, psfluxerr FROM elasticc2_ppdbdiasource WHERE diaobject_id IN (%s) ORDER BY diaobject_id;' % (', '.join(str(id) for id in ids)),
+                 json={'query': 'SELECT diaobject_id, filtername, psflux, psfluxerr FROM elasticc2_ppdbdiasource WHERE diaobject_id IN (%s) ORDER BY diaobject_id;' % (', '.join(str(id) for id in ids)),
                       'subdict': {}})
     ts_data = ts.json() if ts.status_code == 200 else ts.status_code
     print('=> Loaded time-series data...')
     
-    return type(static_data), type(ts_data)
+    ts_data = np.array(ts_data['rows'])
+    combined = []
+    
+    for i in range(len(static_data['rows'])):
+        combined.append((
+            static_data['rows'][i]['diaobject_id'],
+            static_data['rows'][i],
+            ts_data[np.array([observation['diaobject_id'] == static_data['rows'][i]['diaobject_id'] for observation in ts_data])]
+        ))
+    
+    return combined
 
 if __name__ == '__main__':
     res = load_oracle_features_from_TOM(

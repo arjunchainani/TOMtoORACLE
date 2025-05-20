@@ -34,6 +34,10 @@ static_key_map = {
     'hostgal_mag_y': 'HOSTGAL_MAG_Y',
 }
 
+gentype_to_type = {
+    10: 'SN Ia', 32: 'SN II', 31: 'SN II', 35: 'SN IIn', 36: 'SN IIn', 42: 'TDE', 21: 'SN Ib', 20: 'SN Ib', 72: 'SLSN-II', 37: 'SN IIb', 27: 'SN Ic-BL', 26: 'SN Ic', 25: 'SN Ic'
+}
+
 # wrapper for the LSST_Source class that can take in manual input rather than just from parquet
 class TOM_Source(LSST_Source):
     def __init__(self, snid):

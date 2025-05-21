@@ -35,11 +35,15 @@ static_key_map = {
 }
 
 gentype_to_type = {
-    10: 'SN Ia', 32: 'SN II', 31: 'SN II', 35: 'SN IIn', 36: 'SN IIn', 42: 'TDE', 21: 'SN Ib', 20: 'SN Ib', 72: 'SLSN-II', 37: 'SN IIb', 27: 'SN Ic-BL', 26: 'SN Ic', 25: 'SN Ic'
+    10: 'SNIa', 25: 'SNIb/c', 37: 'SNII', 12: 'SNIax', 11: 'SN91bg', 50: 'KN', 82: 'M-dwarf Flare', 84: 'Dwarf Novae', 88: 'uLens', 40: 'SLSN', 42: 'TDE', 45: 'ILOT', 46: 'CART', 59: 'PISN', 90: 'Cepheid', 80: 'RR Lyrae', 91: 'Delta Scuti', 83: 'EB', 60: 'AGN',
 }
 
 # wrapper for the LSST_Source class that can take in manual input rather than just from parquet
 class TOM_Source(LSST_Source):
-    def __init__(self, snid):
-        setattr(self, 'SNID', snid)
-        # add setattr for elasticc_class after converting it from gentype
+    def __init__(self, data):
+        setattr(self, 'SNID', data[0])
+        setattr(self, 'astrophysical_class', gentype_to_type[data[-1]])
+        
+        # extra LC processing
+        self.process_lightcurve()
+        self.compute_custom_features()

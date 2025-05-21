@@ -137,11 +137,11 @@ def load_oracle_features_from_TOM(
     ts_data = ts.json() if ts.status_code == 200 else ts.status_code
     print('=> Loaded time-series data...')
     
-    forced = tom.post('db/runsqlquery/',
-                 json={'query': 'SELECT diaobject_id, filtername, psflux, psfluxerr FROM elasticc2_ppdbdiaforcedsource WHERE diaobject_id IN (%s) ORDER BY diaobject_id;' % (', '.join(str(id) for id in ids)),
-                      'subdict': {}})
-    forced_data = forced.json() if forced.status_code == 200 else forced.status_code
-    print(forced_data)
+    # forced = tom.post('db/runsqlquery/',
+    #              json={'query': 'SELECT diaobject_id, filtername, psflux, psfluxerr FROM elasticc2_ppdbdiaforcedsource WHERE diaobject_id IN (%s) ORDER BY diaobject_id;' % (', '.join(str(id) for id in ids)),
+    #                   'subdict': {}})
+    # forced_data = forced.json() if forced.status_code == 200 else forced.status_code
+    # print(forced_data)
     
     gentype = tom.post('db/runsqlquery/',
                  json={'query': 'SELECT diaobject_id, gentype FROM elasticc2_diaobjecttruth WHERE diaobject_id IN (%s) ORDER BY diaobject_id;' % (', '.join(str(id) for id in ids)),

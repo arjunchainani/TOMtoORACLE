@@ -10,6 +10,7 @@ from astroOracle.pretrained_models import ORACLE
 from astroOracle.interpret_results import get_conditional_probabilites
 from astroOracle.taxonomy import source_node_label
 from keras.utils import pad_sequences
+pd.set_option('display.max_columns', None)
 
 # maps from the TOM feature names to the ORACLE feature names
 ts_key_map = { # need to figure out solution for MJD and PHOTFLAG features
@@ -75,7 +76,11 @@ class TOM_Source(LSST_Source):
         self.FLUXCALERR = flux_err
         self.BAND = filters
         
-        self.PHOTFLAG = pl.Series([0] * len(self.MJD)) # temporary until a better solution is found
+        self.PHOTFLAG = pl.Series([4096 if abs(self.FLUXCAL[i] / self.FLUXCALERR[i]) >= 5.0 else 0 for i in range(len(self.FLUXCAL))]) # detection flag if sigma >= 5
+        try:
+            self.PHOTFLAG[int(np.where(self.PHOTFLAG == 4096)[0][0])] = 6144
+        except IndexError:
+            pass
         
         # loading in static data
         static_data = data[1]

@@ -25,6 +25,8 @@ if __name__ == '__main__':
     for object in tom_data:
         source = TOM_Source(object)
         table = source.get_event_table()
+        print('\n\n--------------------------------------------\n')
+        table.pprint_all()
         pred = model.predict([table.to_pandas()], [table.meta])
         print(f'\n\nTrue Class: {source.astrophysical_class}')
         print(pred)

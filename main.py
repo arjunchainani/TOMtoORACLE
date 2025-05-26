@@ -1,7 +1,6 @@
 from load_tom import load_oracle_features_from_TOM
-from process_sources import TOM_Source
+from process_sources import TOM_Source, preppedORACLE
 import argparse
-from astroOracle.pretrained_models import ORACLE
 
 parser = argparse.ArgumentParser(description='Fetch latest transients from TOM and classify them through ORACLE')
 parser.add_argument('-n', '--num_objects', type=int, metavar='', default=5, help='Number of transients to classify')
@@ -21,11 +20,12 @@ if __name__ == '__main__':
         mjd_now=args.mjd_now
     )
     
-    model = ORACLE(args.model_path)
+    model = preppedORACLE(args.model_path)
     
     for object in tom_data:
         source = TOM_Source(object)
         table = source.get_event_table()
         pred = model.predict([table.to_pandas()], [table.meta])
-        print(f'True Class: {source.astrophysical_class}')
+        print(f'\n\nTrue Class: {source.astrophysical_class}')
         print(pred)
+        print(f'Predicted Class: {model.predict_classes([table.to_pandas()], [table.meta])}')

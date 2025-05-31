@@ -88,6 +88,10 @@ class TOM_Source(LSST_Source):
         for feature in static_data.keys():
             setattr(self, static_key_map[feature], static_data[feature])
         
+        # visualization
+        self.ELASTICC_class = self.astrophysical_class
+        self.plot_flux_curve()
+        
         # extra LC processing
         self.process_lightcurve()
         self.compute_custom_features()

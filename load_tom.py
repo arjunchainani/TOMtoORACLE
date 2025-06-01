@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import requests
+import itertools
+from operator import itemgetter
 
 class TomClient:
     """A thin class that supports sending requests via "requests" to the DESC tom.
@@ -137,6 +139,15 @@ def load_oracle_features_from_TOM(
     ts_data = ts.json() if ts.status_code == 200 else ts.status_code
     print('=> Loaded time-series data...')    
     
+    assert ts_data['status'] == 'ok', 'Failed to retrieve data from TOM!'
+    
+    # for each object, sort all observations by MJD
+    ts_data['rows'].sort(key=lambda obs: obs['diaobject_id'])
+    grouped_ts_data = {snid: list(obj) for snid, obj in itertools.groupby(ts_data['rows'], key=lambda obs: obs['diaobject_id'])}
+    
+    for observation in grouped_ts_data.values():
+        observation.sort(key=lambda obs: obs['midpointtai'])
+    
     # forced = tom.post('db/runsqlquery/',
     #              json={'query': 'SELECT diaobject_id, filtername, psflux, psfluxerr FROM elasticc2_ppdbdiaforcedsource WHERE diaobject_id IN (%s) ORDER BY diaobject_id;' % (', '.join(str(id) for id in ids)),
     #                   'subdict': {}})
@@ -148,20 +159,21 @@ def load_oracle_features_from_TOM(
                       'subdict': {}})
     gentype_data = gentype.json() if gentype.status_code == 200 else gentype.status_code
     
-    assert type(static_data) != int and type(ts_data) != int and type(gentype_data) != int, 'Failed to retrieve data from TOM'
+    assert type(static_data) != int and type(ts_data) != int and type(gentype_data) != int and static_data['status'] == 'ok' and ts_data['status'] == 'ok' and gentype_data['status'] == 'ok', 'Failed to retrieve data from TOM'
     
     ts_data = np.array(ts_data['rows'])
     gentype_data = np.array(gentype_data['rows'])
     combined = []
-    
+        
     for i in range(len(static_data['rows'])):
         combined.append((
             static_data['rows'][i]['diaobject_id'],
             static_data['rows'][i],
-            ts_data[np.array([observation['diaobject_id'] == static_data['rows'][i]['diaobject_id'] for observation in ts_data])],
+            # ts_data[np.array([observation['diaobject_id'] == static_data['rows'][i]['diaobject_id'] for observation in ts_data])],
+            list(grouped_ts_data.values())[i],
             gentype_data[np.array([observation['diaobject_id'] == static_data['rows'][i]['diaobject_id'] for observation in gentype_data])]
         ))
-    
+        
     return combined
 
 if __name__ == '__main__':

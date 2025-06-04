@@ -10,6 +10,8 @@ from astroOracle.pretrained_models import ORACLE
 from astroOracle.interpret_results import get_conditional_probabilites
 from astroOracle.taxonomy import source_node_label
 from keras.utils import pad_sequences
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 pd.set_option('display.max_columns', None)
 
 # maps from the TOM feature names to the ORACLE feature names
@@ -49,7 +51,7 @@ gentype_to_type = {
     32: 'SNII', 31: 'SNII', 35: 'SNII', 36: 'SNII', 21: 'SNIb/c', 20: 'SNIb/c', 72: 'SLSN', 27: 'SNIb/c', 26: 'SNIb/c'
 }
 
-# # wrapper for the LSST_Source class that can take in manual input rather than just from parquet
+# wrapper for the LSST_Source class that can take in manual input rather than just from parquet
 class TOM_Source(LSST_Source):
     # other_features = ['RA', 'DEC', 'MWEBV', 'MWEBV_ERR', 'REDSHIFT_HELIO', 'REDSHIFT_HELIO_ERR', 'HOSTGAL_PHOTOZ', 'HOSTGAL_PHOTOZ_ERR', 'HOSTGAL_SPECZ', 'HOSTGAL_SPECZ_ERR', 'HOSTGAL_RA', 'HOSTGAL_DEC', 'HOSTGAL_SNSEP', 'HOSTGAL_DDLR', 'HOSTGAL_LOGMASS', 'HOSTGAL_LOGMASS_ERR', 'HOSTGAL_LOGSFR', 'HOSTGAL_LOGSFR_ERR', 'HOSTGAL_LOGsSFR', 'HOSTGAL_LOGsSFR_ERR', 'HOSTGAL_COLOR', 'HOSTGAL_COLOR_ERR', 'HOSTGAL_ELLIPTICITY', 'HOSTGAL_MAG_u', 'HOSTGAL_MAG_g', 'HOSTGAL_MAG_r', 'HOSTGAL_MAG_i', 'HOSTGAL_MAG_z', 'HOSTGAL_MAG_Y', 'HOSTGAL_MAGERR_u', 'HOSTGAL_MAGERR_g', 'HOSTGAL_MAGERR_r', 'HOSTGAL_MAGERR_i', 'HOSTGAL_MAGERR_z', 'HOSTGAL_MAGERR_Y']
     other_features = static_feature_list
@@ -72,6 +74,7 @@ class TOM_Source(LSST_Source):
             filters = np.append(filters, obs['filtername'])
         
         self.MJD = mjd
+        print(f'MJD Range: {self.MJD[0]} - {self.MJD[-1]}')
         self.FLUXCAL = flux
         self.FLUXCALERR = flux_err
         self.BAND = filters
@@ -105,6 +108,29 @@ class TOM_Source(LSST_Source):
                 setattr(self, time_series_feature, getattr(self, time_series_feature)[saturation_mask])
             else:
                 setattr(self, time_series_feature, getattr(self, time_series_feature).filter(saturation_mask))
+    
+    def plot_flux_curve(self) -> None:
+        """Plot the SNANA calibrated flux vs time plot for all the data in the processed time series. All detections are marked with a star while non detections are marked with dots. Observations are color codded by their passband. This function is fundamentally a visualization tool and is not intended for making plots for papers.
+        """
+
+        # Colorize the data
+        c = [self.colors[band] for band in self.BAND]
+        patches = [mpatches.Patch(color=self.colors[band], label=band, linewidth=1) for band in self.colors]
+        fmts = np.where((self.PHOTFLAG & 4096) != 0, '*', '.')
+        alpha = np.where((fmts == '.'), 0.1, 1)
+
+        # Plot flux time series
+        for i in range(len(self.MJD)):
+            plt.errorbar(x=self.MJD[i], y=self.FLUXCAL[i], yerr=self.FLUXCALERR[i], color=c[i], fmt=fmts[i], alpha=alpha[i], markersize = '10')
+
+        # Labels
+        plt.title(f"SNID: {self.SNID} | CLASS: {self.ELASTICC_class} | z = {self.REDSHIFT_HELIO} | ra = {self.RA} | dec = {self.DEC}", wrap=True)
+        plt.xlabel('Time (MJD)')
+        plt.ylabel('Calibrated Flux')
+        plt.legend(handles=patches)
+
+        plt.show()
+
 
 class preppedORACLE(ORACLE):
     def prep_dataframes(self, x_ts_list:List[pd.DataFrame]):

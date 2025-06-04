@@ -134,10 +134,10 @@ def load_oracle_features_from_TOM(
     print('=> Loaded static data...')
     
     ts = tom.post('db/runsqlquery/',
-                 json={'query': 'SELECT diaobject_id, midpointtai, filtername, psflux, psfluxerr FROM elasticc2_ppdbdiasource WHERE diaobject_id IN (%s) ORDER BY diaobject_id;' % (', '.join(str(id) for id in ids)),
+                 json={'query': 'SELECT diaobject_id, midpointtai, filtername, psflux, psfluxerr FROM elasticc2_ppdbdiaforcedsource WHERE diaobject_id IN (%s) ORDER BY diaobject_id;' % (', '.join(str(id) for id in ids)),
                       'subdict': {}})
     ts_data = ts.json() if ts.status_code == 200 else ts.status_code
-    print('=> Loaded time-series data...')    
+    print('=> Loaded time-series data...') 
     
     assert ts_data['status'] == 'ok', 'Failed to retrieve data from TOM!'
     
@@ -148,6 +148,11 @@ def load_oracle_features_from_TOM(
     for observation in grouped_ts_data.values():
         observation.sort(key=lambda obs: obs['midpointtai'])
     
+    peak_mjds = tom.post('db/runsqlquery/',
+                 json={'query': 'SELECT diaobject_id, peakmjd FROM elasticc2_diaobjecttruth WHERE diaobject_id IN (%s) ORDER BY diaobject_id;' % (', '.join(str(id) for id in ids)),
+                      'subdict': {}})
+    print(peak_mjds.json())
+ 
     # forced = tom.post('db/runsqlquery/',
     #              json={'query': 'SELECT diaobject_id, filtername, psflux, psfluxerr FROM elasticc2_ppdbdiaforcedsource WHERE diaobject_id IN (%s) ORDER BY diaobject_id;' % (', '.join(str(id) for id in ids)),
     #                   'subdict': {}})

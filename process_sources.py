@@ -55,7 +55,7 @@ gentype_to_type = {
 class TOM_Source(LSST_Source):
     # other_features = ['RA', 'DEC', 'MWEBV', 'MWEBV_ERR', 'REDSHIFT_HELIO', 'REDSHIFT_HELIO_ERR', 'HOSTGAL_PHOTOZ', 'HOSTGAL_PHOTOZ_ERR', 'HOSTGAL_SPECZ', 'HOSTGAL_SPECZ_ERR', 'HOSTGAL_RA', 'HOSTGAL_DEC', 'HOSTGAL_SNSEP', 'HOSTGAL_DDLR', 'HOSTGAL_LOGMASS', 'HOSTGAL_LOGMASS_ERR', 'HOSTGAL_LOGSFR', 'HOSTGAL_LOGSFR_ERR', 'HOSTGAL_LOGsSFR', 'HOSTGAL_LOGsSFR_ERR', 'HOSTGAL_COLOR', 'HOSTGAL_COLOR_ERR', 'HOSTGAL_ELLIPTICITY', 'HOSTGAL_MAG_u', 'HOSTGAL_MAG_g', 'HOSTGAL_MAG_r', 'HOSTGAL_MAG_i', 'HOSTGAL_MAG_z', 'HOSTGAL_MAG_Y', 'HOSTGAL_MAGERR_u', 'HOSTGAL_MAGERR_g', 'HOSTGAL_MAGERR_r', 'HOSTGAL_MAGERR_i', 'HOSTGAL_MAGERR_z', 'HOSTGAL_MAGERR_Y']
     other_features = static_feature_list
-    
+        
     def __init__(self, data):
         setattr(self, 'astrophysical_class', gentype_to_type[data[3][0]['gentype']])
         
@@ -91,13 +91,13 @@ class TOM_Source(LSST_Source):
         for feature in static_data.keys():
             setattr(self, static_key_map[feature], static_data[feature])
         
-        # visualization
-        self.ELASTICC_class = self.astrophysical_class
-        self.plot_flux_curve()
-        
         # extra LC processing
         self.process_lightcurve()
         self.compute_custom_features()
+        
+        # visualization
+        self.ELASTICC_class = self.astrophysical_class
+        self.plot_flux_curve(f'./TOM_LC_{self.SNID}.png')
     
     def process_lightcurve(self):
         saturation_mask =  (self.PHOTFLAG & 1024) == 0 
@@ -109,7 +109,7 @@ class TOM_Source(LSST_Source):
             else:
                 setattr(self, time_series_feature, getattr(self, time_series_feature).filter(saturation_mask))
     
-    def plot_flux_curve(self) -> None:
+    def plot_flux_curve(self, save_path=None) -> None:
         """Plot the SNANA calibrated flux vs time plot for all the data in the processed time series. All detections are marked with a star while non detections are marked with dots. Observations are color codded by their passband. This function is fundamentally a visualization tool and is not intended for making plots for papers.
         """
 
@@ -128,6 +128,9 @@ class TOM_Source(LSST_Source):
         plt.xlabel('Time (MJD)')
         plt.ylabel('Calibrated Flux')
         plt.legend(handles=patches)
+
+        if save_path:
+            plt.savefig(save_path)
 
         plt.show()
 

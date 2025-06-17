@@ -75,8 +75,11 @@ class TOM_Source(LSST_Source):
         
         self.MJD = mjd
         print(f'MJD Range: {self.MJD[0]} - {self.MJD[-1]}')
-        self.FLUXCAL = flux
-        self.FLUXCALERR = flux_err
+        
+        TOM_scaling_const = 10 ** ((31.4 - 27.5) / 2.5)
+        
+        self.FLUXCAL = flux / TOM_scaling_const
+        self.FLUXCALERR = flux_err / TOM_scaling_const
         self.BAND = filters
         
         self.PHOTFLAG = pl.Series([4096 if abs(self.FLUXCAL[i] / self.FLUXCALERR[i]) >= 5.0 else 0 for i in range(len(self.FLUXCAL))]) # detection flag if sigma >= 5

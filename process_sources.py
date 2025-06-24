@@ -76,7 +76,7 @@ class TOM_Source(LSST_Source):
         self.MJD = mjd
         print(f'MJD Range: {self.MJD[0]} - {self.MJD[-1]}')
         
-        TOM_scaling_const = 10 ** ((31.4 - 27.5) / 2.5)
+        TOM_scaling_const = 10 ** ((31.4 - 27.5) / 2.5) # necessary because of the difference in the TOM and parquet flux scaling
         
         self.FLUXCAL = flux / TOM_scaling_const
         self.FLUXCALERR = flux_err / TOM_scaling_const
